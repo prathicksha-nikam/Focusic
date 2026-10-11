@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop Task & Attendance Manager (Notion Style)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen p-6">
+
+    <div class="max-w-6xl mx-auto space-y-8">
+        
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-4 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight text-gray-900">🏢 Shop Operations Workspace</h1>
+                <p class="text-sm text-gray-500 mt-1">Owner & Employee Task Manager with Granular Attendance Tracking</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    Role: Shop Owner / Admin
+                </span>
+            </div>
+        </header>
+
+        <!-- SECTION 1: Attendance Tracker (Presence / Absence) -->
+        <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">📋 Daily Attendance & Status Tracker</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b text-sm text-gray-500 bg-gray-50">
+                            <th class="p-3">Employee Name</th>
+                            <th class="p-3">Role</th>
+                            <th class="p-3">Status</th>
+                            <th class="p-3">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceTableBody" class="text-sm">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SECTION 2: Task Assignment Dashboard -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Assign Job Task (Owner View) -->
+            <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">📌 Assign Task to Employee</h2>
+                <form id="taskForm" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Select Employee</label>
+                        <select id="taskEmployee" class="w-full p-2.5 border rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <option value="Rahul Sharma">Rahul Sharma (Sales)</option>
+                            <option value="Pooja Verma">Pooja Verma (Inventory)</option>
+                            <option value="Amit Kumar">Amit Kumar (Support)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Task Description</label>
+                        <input type="text" id="taskDesc" placeholder="e.g., Clean front window displays" required class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Target Check Time/Deadline</label>
+                        <input type="datetime-local" id="taskDeadline" required class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white font-medium py-2.5 rounded-lg text-sm hover:bg-blue-700 transition">
+                        Assign Task
+                    </button>
+                </form>
+            </section>
+
+            <!-- Ad-hoc Task Submission (Employee Extra Work Log) -->
+            <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">⚡ Log Self-Done / Ad-hoc Task</h2>
+                <form id="adhocForm" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Employee Name</label>
+                        <select id="adhocEmployee" class="w-full p-2.5 border rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                            <option value="Rahul Sharma">Rahul Sharma</option>
+                            <option value="Pooja Verma">Pooja Verma</option>
+                            <option value="Amit Kumar">Amit Kumar</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">What task did you complete (Unassigned)?</label>
+                        <input type="text" id="adhocDesc" placeholder="e.g., Organized back storage boxes" required class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    </div>
+                    <button type="submit" class="w-full bg-emerald-600 text-white font-medium py-2.5 rounded-lg text-sm hover:bg-emerald-700 transition">
+                        Log Extra Work
+                    </button>
+                </form>
+            </section>
+
+        </div>
+
+        <!-- SECTION 3: Live Notion-style Tasks Database View -->
+        <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">📊 Active Tasks & Granular Log Feed</h2>
+                <span class="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded">Auto-syncs real-time</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b text-sm text-gray-500 bg-gray-50">
+                            <th class="p-3">Type</th>
+                            <th class="p-3">Employee</th>
+                            <th class="p-3">Task Details</th>
+                            <th class="p-3">Check Deadline</th>
+                            <th class="p-3">Completion Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="taskTableBody" class="text-sm">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Script to handle dynamic behavior -->
+    <script>
+        // Initial Mock Database States
+        let employees = [
+            { name: "Rahul Sharma", role: "Sales Executive", status: "Present" },
+            { name: "Pooja Verma", role: "Inventory Manager", status: "Present" },
+            { name: "Amit Kumar", role: "Store Assistant", status: "Absent" }
+        ];
+
+        let tasks = [
+            { type: "Assigned", employee: "Rahul Sharma", desc: "Update catalog prices", deadline: "2026-10-12 14:00", checked: false },
+            { type: "Ad-hoc", employee: "Pooja Verma", desc: "Cleaned front showcase glass", deadline: "N/A", checked: true }
+        ];
+
+        function renderApp() {
+            // Render Attendance Table
+            const attendanceBody = document.getElementById('attendanceTableBody');
+            attendanceBody.innerHTML = '';
+            employees.forEach((emp, index) => {
+                attendanceBody.innerHTML += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-3 font-medium">${emp.name}</td>
+                        <td class="p-3 text-gray-500">${emp.role}</td>
+                        <td class="p-3">
+                            <span class="px-2 py-1 rounded text-xs font-semibold ${emp.status === 'Present' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                                ${emp.status}
+                            </span>
+                        </td>
+                        <td class="p-3">
+                            <button onclick="toggleAttendance(${index})" class="text-xs text-blue-600 hover:underline font-medium">Toggle Presence</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // Render Tasks Table
+            const taskBody = document.getElementById('taskTableBody');
+            taskBody.innerHTML = '';
+            tasks.forEach((t, index) => {
+                let statusBadge = t.checked 
+                    ? `<span class="px-2.5 py-1 rounded bg-green-100 text-green-800 text-xs font-medium">Checked (Done)</span>` 
+                    : `<span class="px-2.5 py-1 rounded bg-amber-100 text-amber-800 text-xs font-medium">Pending / Never Checked</span>`;
+
+                taskBody.innerHTML += `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-3 font-semibold text-gray-600">${t.type}</td>
+                        <td class="p-3">${t.employee}</td>
+                        <td class="p-3">${t.desc}</td>
+                        <td class="p-3 text-gray-500">${t.deadline}</td>
+                        <td class="p-3">
+                            <div class="flex items-center gap-3">
+                                ${statusBadge}
+                                <button onclick="toggleTaskCheck(${index})" class="text-xs text-gray-500 hover:text-blue-600 border px-2 py-1 rounded">Switch</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function toggleAttendance(index) {
+            employees[index].status = employees[index].status === 'Present' ? 'Absent' : 'Present';
+            renderApp();
+        }
+
+        function toggleTaskCheck(index) {
+            tasks[index].checked = !tasks[index].checked;
+            renderApp();
+        }
+
+        // Handle Assigned Task Form Submission
+        document.getElementById('taskForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const employee = document.getElementById('taskEmployee').value;
+            const desc = document.getElementById('taskDesc').value;
+            const deadline = document.getElementById('taskDeadline').value.replace('T', ' ');
+
+            tasks.unshift({ type: 'Assigned', employee, desc, deadline, checked: false });
+            document.getElementById('taskDesc').value = '';
+            document.getElementById('taskDeadline').value = '';
+            renderApp();
+        });
+
+        // Handle Ad-hoc Task Form Submission
+        document.getElementById('adhocForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const employee = document.getElementById('adhocEmployee').value;
+            const desc = document.getElementById('adhocDesc').value;
+
+            tasks.unshift({ type: 'Ad-hoc (Self)', employee, desc, deadline: 'N/A', checked: true });
+            document.getElementById('adhocDesc').value = '';
+            renderApp();
+        });
+
+        // Initial render execution
+        renderApp();
+    </script>
+</body>
+</html>
