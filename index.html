@@ -1,227 +1,635 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shop Task & Attendance Manager (Notion Style)</title>
-    <!-- Tailwind CSS CDN -->
+    <title>Student Life Dashboard - Notion Style</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .notion-shadow { box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03); }
+        /* Custom scrollbar for clean Notion aesthetic */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-900 min-h-screen p-6">
+<body class="h-full bg-[#fbfbfa] text-[#37352f] flex overflow-hidden">
 
-    <div class="max-w-6xl mx-auto space-y-8">
+    <aside class="w-64 bg-[#f7f6f3] border-r border-[#e9e9e7] flex flex-col justify-between shrink-0 hidden md:flex select-none">
+        <div class="p-4 space-y-6">
+            <!-- Workspace Profile Header -->
+            <div class="flex items-center gap-3 px-2 py-1 rounded-md hover:bg-[#ecece9] cursor-pointer transition">
+                <div class="w-7 h-7 rounded bg-amber-200 flex items-center justify-center font-bold text-amber-800 text-xs">🎓</div>
+                <div class="truncate">
+                    <h2 class="text-xs font-semibold text-gray-800 truncate">Alex's University Space</h2>
+                    <p class="text-[10px] text-gray-500">Personal Notion Workspace</p>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <div class="space-y-1">
+                <p class="px-2 text-[10px] font-semibold tracking-wider text-gray-400 uppercase mb-2">Views</p>
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-[#37352f] bg-[#ecece9] transition">
+                    <span>🏠</span> Overview Dashboard
+                </button>
+                <button onclick="switchTab('timetable')" id="nav-timetable" class="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-gray-600 hover:bg-[#ecece9] transition">
+                    <span>📅</span> Weekly Timetable
+                </button>
+                <button onclick="switchTab('tasks')" id="nav-tasks" class="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-gray-600 hover:bg-[#ecece9] transition">
+                    <span>📝</span> Task Manager
+                </button>
+                <button onclick="switchTab('habits')" id="nav-habits" class="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-gray-600 hover:bg-[#ecece9] transition">
+                    <span>✨</span> Study Habit Grid
+                </button>
+                <button onclick="switchTab('exams')" id="nav-exams" class="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-gray-600 hover:bg-[#ecece9] transition">
+                    <span>📊</span> Grades & Exams
+                </button>
+            </div>
+        </div>
+
+        <!-- Sidebar Footer / Quick Stats -->
+        <div class="p-4 border-t border-[#e9e9e7] text-[11px] text-gray-500 space-y-1">
+            <p class="font-medium text-gray-700">💡 Tip of the Day</p>
+            <p class="leading-relaxed">Use the Pomodoro focus method for 25-minute sprints between habit checks.</p>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-full overflow-hidden bg-white">
         
-        <!-- Header -->
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-4 gap-4">
-            <div>
-                <h1 class="text-3xl font-bold tracking-tight text-gray-900">🏢 Shop Operations Workspace</h1>
-                <p class="text-sm text-gray-500 mt-1">Owner & Employee Task Manager with Granular Attendance Tracking</p>
+        <!-- Top Sticky Header -->
+        <header class="h-14 border-b border-[#e9e9e7] px-6 flex items-center justify-between shrink-0 bg-white z-10">
+            <div class="flex items-center gap-3">
+                <span class="text-xl">📚</span>
+                <h1 id="page-title" class="text-sm font-semibold tracking-tight text-gray-900">Overview Dashboard</h1>
             </div>
             <div class="flex items-center gap-3">
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                    Role: Shop Owner / Admin
-                </span>
+                <span id="current-date-badge" class="text-xs bg-[#f1f1ef] px-2.5 py-1 rounded-md text-gray-600 font-medium"></span>
+                <div class="w-7 h-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">AS</div>
             </div>
         </header>
 
-        <!-- SECTION 1: Attendance Tracker (Presence / Absence) -->
-        <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <h2 class="text-xl font-semibold mb-4 text-gray-800">📋 Daily Attendance & Status Tracker</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="border-b text-sm text-gray-500 bg-gray-50">
-                            <th class="p-3">Employee Name</th>
-                            <th class="p-3">Role</th>
-                            <th class="p-3">Status</th>
-                            <th class="p-3">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="attendanceTableBody" class="text-sm">
-                        <!-- Populated by JS -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- SECTION 2: Task Assignment Dashboard -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Scrollable Workspace Viewport -->
+        <div id="content-viewport" class="flex-1 overflow-y-auto p-6 md:p-8 space-y-8">
             
-            <!-- Assign Job Task (Owner View) -->
-            <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <h2 class="text-xl font-semibold mb-4 text-gray-800">📌 Assign Task to Employee</h2>
-                <form id="taskForm" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Select Employee</label>
-                        <select id="taskEmployee" class="w-full p-2.5 border rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                            <option value="Rahul Sharma">Rahul Sharma (Sales)</option>
-                            <option value="Pooja Verma">Pooja Verma (Inventory)</option>
-                            <option value="Amit Kumar">Amit Kumar (Support)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Task Description</label>
-                        <input type="text" id="taskDesc" placeholder="e.g., Clean front window displays" required class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Target Check Time/Deadline</label>
-                        <input type="datetime-local" id="taskDeadline" required class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                    </div>
-                    <button type="submit" class="w-full bg-blue-600 text-white font-medium py-2.5 rounded-lg text-sm hover:bg-blue-700 transition">
-                        Assign Task
-                    </button>
-                </form>
-            </section>
+            <!-- ================= DASHBOARD TAB ================= -->
+            <div id="tab-dashboard" class="space-y-6 max-w-5xl mx-auto">
+                <div class="border-b border-[#e9e9e7] pb-4">
+                    <h2 class="text-2xl font-bold tracking-tight">👋 Welcome back, Alex!</h2>
+                    <p class="text-sm text-gray-500 mt-1">Here is your student command center for today. Stay organized & focused.</p>
+                </div>
 
-            <!-- Ad-hoc Task Submission (Employee Extra Work Log) -->
-            <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <h2 class="text-xl font-semibold mb-4 text-gray-800">⚡ Log Self-Done / Ad-hoc Task</h2>
-                <form id="adhocForm" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">Employee Name</label>
-                        <select id="adhocEmployee" class="w-full p-2.5 border rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-                            <option value="Rahul Sharma">Rahul Sharma</option>
-                            <option value="Pooja Verma">Pooja Verma</option>
-                            <option value="Amit Kumar">Amit Kumar</option>
-                        </select>
+                <!-- Quick Metrics Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-[#f7f6f3] p-4 rounded-xl border border-[#e9e9e7] notion-shadow">
+                        <p class="text-xs font-semibold text-gray-500 uppercase">Pending Tasks</p>
+                        <p id="stat-pending-tasks" class="text-2xl font-bold mt-1 text-gray-900">0</p>
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1">What task did you complete (Unassigned)?</label>
-                        <input type="text" id="adhocDesc" placeholder="e.g., Organized back storage boxes" required class="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                    <div class="bg-[#f7f6f3] p-4 rounded-xl border border-[#e9e9e7] notion-shadow">
+                        <p class="text-xs font-semibold text-gray-500 uppercase">Habit Streak Today</p>
+                        <p id="stat-habit-streak" class="text-2xl font-bold mt-1 text-emerald-600">4/5 Done</p>
                     </div>
-                    <button type="submit" class="w-full bg-emerald-600 text-white font-medium py-2.5 rounded-lg text-sm hover:bg-emerald-700 transition">
-                        Log Extra Work
+                    <div class="bg-[#f7f6f3] p-4 rounded-xl border border-[#e9e9e7] notion-shadow">
+                        <p class="text-xs font-semibold text-gray-500 uppercase">Upcoming Exams</p>
+                        <p id="stat-upcoming-exams" class="text-2xl font-bold mt-1 text-blue-600">2</p>
+                    </div>
+                    <div class="bg-[#f7f6f3] p-4 rounded-xl border border-[#e9e9e7] notion-shadow">
+                        <p class="text-xs font-semibold text-gray-500 uppercase">Semester GPA</p>
+                        <p class="text-2xl font-bold mt-1 text-purple-600">3.85</p>
+                    </div>
+                </div>
+
+                <!-- Quick Action Shortcuts -->
+                <div class="bg-[#fbfbfa] border border-[#e9e9e7] rounded-xl p-6 space-y-4">
+                    <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500">Quick Navigation Cards</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div onclick="switchTab('tasks')" class="p-4 rounded-lg bg-white border border-[#e9e9e7] hover:border-gray-400 cursor-pointer transition notion-shadow">
+                            <span class="text-lg">📝</span>
+                            <h4 class="font-semibold text-sm mt-2">Manage To-Do List</h4>
+                            <p class="text-xs text-gray-500 mt-1">View priority assignments and deadlines.</p>
+                        </div>
+                        <div onclick="switchTab('timetable')" class="p-4 rounded-lg bg-white border border-[#e9e9e7] hover:border-gray-400 cursor-pointer transition notion-shadow">
+                            <span class="text-lg">📅</span>
+                            <h4 class="font-semibold text-sm mt-2">Weekly Schedule</h4>
+                            <p class="text-xs text-gray-500 mt-1">Check lectures, labs, and study blocks.</p>
+                        </div>
+                        <div onclick="switchTab('habits')" class="p-4 rounded-lg bg-white border border-[#e9e9e7] hover:border-gray-400 cursor-pointer transition notion-shadow">
+                            <span class="text-lg">✨</span>
+                            <h4 class="font-semibold text-sm mt-2">Habit Tracker Grid</h4>
+                            <p class="text-xs text-gray-500 mt-1">Log daily focus sessions and reading.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TIMETABLE TAB ================= -->
+            <div id="tab-timetable" class="space-y-6 max-w-5xl mx-auto hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#e9e9e7] pb-4 gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold tracking-tight">📅 Weekly Timetable & Schedule</h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Organize your academic lectures and study blocks.</p>
+                    </div>
+                    <button onclick="openModal('classModal')" class="bg-gray-900 text-white text-xs px-3 py-1.5 rounded-md font-medium hover:bg-black transition">
+                        + Add Schedule Item
                     </button>
-                </form>
-            </section>
+                </div>
+
+                <div class="bg-white border border-[#e9e9e7] rounded-xl overflow-hidden notion-shadow">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-[#f7f6f3] border-b border-[#e9e9e7] text-gray-500">
+                                    <th class="p-3">Day</th>
+                                    <th class="p-3">Time</th>
+                                    <th class="p-3">Course / Activity</th>
+                                    <th class="p-3">Location / Room</th>
+                                    <th class="p-3">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="timetable-body">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TASKS TAB ================= -->
+            <div id="tab-tasks" class="space-y-6 max-w-5xl mx-auto hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#e9e9e7] pb-4 gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold tracking-tight">📝 Task Manager & Assignments</h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Track deliverables with priority tags and completion status.</p>
+                    </div>
+                    <button onclick="openModal('taskModal')" class="bg-gray-900 text-white text-xs px-3 py-1.5 rounded-md font-medium hover:bg-black transition">
+                        + New Task
+                    </button>
+                </div>
+
+                <!-- Filters -->
+                <div class="flex items-center gap-2 text-xs">
+                    <button onclick="filterTasks('all')" id="filter-all" class="px-3 py-1 rounded bg-gray-900 text-white font-medium">All</button>
+                    <button onclick="filterTasks('High')" id="filter-high" class="px-3 py-1 rounded bg-[#f7f6f3] text-gray-600 hover:bg-[#ecece9]">High Priority</button>
+                    <button onclick="filterTasks('Pending')" id="filter-pending" class="px-3 py-1 rounded bg-[#f7f6f3] text-gray-600 hover:bg-[#ecece9]">Pending</button>
+                </div>
+
+                <div class="bg-white border border-[#e9e9e7] rounded-xl overflow-hidden notion-shadow">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-[#f7f6f3] border-b border-[#e9e9e7] text-gray-500">
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3">Task Title</th>
+                                    <th class="p-3">Course</th>
+                                    <th class="p-3">Priority</th>
+                                    <th class="p-3">Due Date</th>
+                                    <th class="p-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tasks-body">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= HABITS TAB ================= -->
+            <div id="tab-habits" class="space-y-6 max-w-5xl mx-auto hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#e9e9e7] pb-4 gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold tracking-tight">✨ Study Habit Tracker Grid</h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Build consistent daily routines for academic excellence.</p>
+                    </div>
+                    <button onclick="addHabit()" class="bg-gray-900 text-white text-xs px-3 py-1.5 rounded-md font-medium hover:bg-black transition">
+                        + Add Habit
+                    </button>
+                </div>
+
+                <div class="bg-white border border-[#e9e9e7] rounded-xl overflow-hidden notion-shadow p-6">
+                    <div class="overflow-x-auto">
+                        <table id="habits-table" class="w-full text-center border-collapse text-xs">
+                            <!-- Generated dynamically -->
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= EXAMS TAB ================= -->
+            <div id="tab-exams" class="space-y-6 max-w-5xl mx-auto hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#e9e9e7] pb-4 gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold tracking-tight">📊 Grades & Exam Schedule</h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Monitor upcoming midterms, finals, and target scores.</p>
+                    </div>
+                    <button onclick="openModal('examModal')" class="bg-gray-900 text-white text-xs px-3 py-1.5 rounded-md font-medium hover:bg-black transition">
+                        + Add Exam
+                    </button>
+                </div>
+
+                <div class="bg-white border border-[#e9e9e7] rounded-xl overflow-hidden notion-shadow">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-[#f7f6f3] border-b border-[#e9e9e7] text-gray-500">
+                                    <th class="p-3">Course</th>
+                                    <th class="p-3">Exam Name</th>
+                                    <th class="p-3">Date</th>
+                                    <th class="p-3">Weight</th>
+                                    <th class="p-3">Target Grade</th>
+                                    <th class="p-3">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="exams-body">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
         </div>
+    </main>
 
-        <!-- SECTION 3: Live Notion-style Tasks Database View -->
-        <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold text-gray-800">📊 Active Tasks & Granular Log Feed</h2>
-                <span class="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded">Auto-syncs real-time</span>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="border-b text-sm text-gray-500 bg-gray-50">
-                            <th class="p-3">Type</th>
-                            <th class="p-3">Employee</th>
-                            <th class="p-3">Task Details</th>
-                            <th class="p-3">Check Deadline</th>
-                            <th class="p-3">Completion Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="taskTableBody" class="text-sm">
-                        <!-- Populated by JS -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
+    <div id="taskModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full space-y-4 notion-shadow">
+            <h3 class="text-base font-bold">Add New Task</h3>
+            <form id="newTaskForm" onsubmit="handleAddTask(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-medium text-gray-600 mb-1">Task Title</label>
+                    <input type="text" id="taskTitle" required class="w-full p-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400">
+                </div>
+                <div>
+                    <label class="block font-medium text-gray-600 mb-1">Course / Tag</label>
+                    <input type="text" id="taskCourse" placeholder="e.g., CS-101" required class="w-full p-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400">
+                </div>
+                <div>
+                    <label class="block font-medium text-gray-600 mb-1">Priority</label>
+                    <select id="taskPriority" class="w-full p-2 border rounded-md bg-white">
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-medium text-gray-600 mb-1">Due Date</label>
+                    <input type="date" id="taskDate" required class="w-full p-2 border rounded-md">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('taskModal')" class="px-3 py-1.5 border rounded-md text-gray-600">Cancel</button>
+                    <button type="submit" class="px-3 py-1.5 bg-gray-900 text-white rounded-md">Save Task</button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <!-- Script to handle dynamic behavior -->
+    <!-- Class Schedule Modal -->
+    <div id="classModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full space-y-4 notion-shadow">
+            <h3 class="text-base font-bold">Add Schedule Item</h3>
+            <form id="newClassForm" onsubmit="handleAddClass(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-medium text-gray-600 mb-1">Day of Week</label>
+                    <select id="classDay" class="w-full p-2 border rounded-md bg-white">
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-medium text-gray-600 mb-1">Time Range</label>
+                    <input type="text" id="classTime" placeholder="e.g., 10:00 AM - 11:30 AM" required class="w-full p-2 border rounded-md">
+                </div>
+                <div>
+                    <label class="block font-medium text-gray-600 mb-1">Course / Subject</label>
+                    <input type="text" id="classSubject" placeholder="e.g., Data Structures" required class="w-full p-2 border rounded-md">
+                </div>
+                <div>
+                    <label class="block font-medium text-gray-600 mb-1">Location / Room</label>
+                    <input type="text" id="classLocation" placeholder="e.g., Hall B - Room 402" required class="w-full p-2 border rounded-md">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('classModal')" class="px-3 py-1.5 border rounded-md text-gray-600">Cancel</button>
+                    <button type="submit" class="px-3 py-1.5 bg-gray-900 text-white rounded-md">Save Schedule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Exam Modal -->
+    <div id="examModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full space-y-4 notion-shadow">
+            <h3 class="text-base font-bold">Add Upcoming Exam</h3>
+            <form id="newExamForm" onsubmit="handleAddExam(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-medium text-gray-600 mb-1">Course</label>
+                    <input type="text" id="examCourse" placeholder="e.g., Physics 202" required class="w-full p-2 border rounded-md">
+                </div>
+                <div>
+                    <label class="block font-medium text-gray-600 mb-1">Exam Name</label>
+                    <input type="text" id="examName" placeholder="e.g., Midterm Exam" required class="w-full p-2 border rounded-md">
+                </div>
+                <div>
+                    <label class="block font-medium text-gray-600 mb-1">Date</label>
+                    <input type="date" id="examDate" required class="w-full p-2 border rounded-md">
+                </div>
+                <div>
+                    <label class="block font-medium text-gray-600 mb-1">Weight</label>
+                    <input type="text" id="examWeight" placeholder="e.g., 30%" required class="w-full p-2 border rounded-md">
+                </div>
+                <div>
+                    <label class="block font-medium text-gray-600 mb-1">Target Grade</label>
+                    <input type="text" id="examTarget" placeholder="e.g., A (90%)" required class="w-full p-2 border rounded-md">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('examModal')" class="px-3 py-1.5 border rounded-md text-gray-600">Cancel</button>
+                    <button type="submit" class="px-3 py-1.5 bg-gray-900 text-white rounded-md">Save Exam</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-        // Initial Mock Database States
-        let employees = [
-            { name: "Rahul Sharma", role: "Sales Executive", status: "Present" },
-            { name: "Pooja Verma", role: "Inventory Manager", status: "Present" },
-            { name: "Amit Kumar", role: "Store Assistant", status: "Absent" }
-        ];
+        // Set header date badge
+        const options = { weekday: 'short', month: 'short', day: 'numeric' };
+        document.getElementById('current-date-badge').innerText = new Date().toLocaleDateString('en-US', options);
 
+        // App State
         let tasks = [
-            { type: "Assigned", employee: "Rahul Sharma", desc: "Update catalog prices", deadline: "2026-10-12 14:00", checked: false },
-            { type: "Ad-hoc", employee: "Pooja Verma", desc: "Cleaned front showcase glass", deadline: "N/A", checked: true }
+            { id: 1, title: 'Finish Algorithms Homework 3', course: 'CS-301', priority: 'High', date: '2026-10-15', completed: false },
+            { id: 2, title: 'Read Literature Chapter 4', course: 'ENG-202', priority: 'Medium', date: '2026-10-16', completed: true },
+            { id: 3, title: 'Prepare Physics Lab Report', course: 'PHYS-102', priority: 'High', date: '2026-10-18', completed: false }
         ];
 
-        function renderApp() {
-            // Render Attendance Table
-            const attendanceBody = document.getElementById('attendanceTableBody');
-            attendanceBody.innerHTML = '';
-            employees.forEach((emp, index) => {
-                attendanceBody.innerHTML += `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="p-3 font-medium">${emp.name}</td>
-                        <td class="p-3 text-gray-500">${emp.role}</td>
+        let timetable = [
+            { day: 'Monday', time: '09:00 AM - 10:30 AM', subject: 'Data Structures & Algs', location: 'Hall A - 102' },
+            { day: 'Monday', time: '11:00 AM - 12:30 PM', subject: 'Calculus III', location: 'Math Building 204' },
+            { day: 'Tuesday', time: '02:00 PM - 05:00 PM', subject: 'Physics Lab', location: 'Science Wing Lab 3' },
+            { day: 'Wednesday', time: '10:00 AM - 11:30 AM', subject: 'Data Structures & Algs', location: 'Hall A - 102' }
+        ];
+
+        let habits = [
+            { name: 'Read 20 pages', days: [true, true, false, true, true, false, true] },
+            { name: 'Pomodoro focus (4 hrs)', days: [true, true, true, true, false, true, true] },
+            { name: 'Review flashcards', days: [false, true, true, false, true, true, true] }
+        ];
+
+        let exams = [
+            { course: 'CS-301', name: 'Midterm Assessment', date: '2026-10-25', weight: '25%', target: 'A (95%)' },
+            { course: 'CALC-3', name: 'Final Exam', date: '2026-11-12', weight: '40%', target: 'A- (90%)' }
+        ];
+
+        let currentFilter = 'all';
+
+        // Tab Navigation
+        function switchTab(tabId) {
+            const tabs = ['dashboard', 'timetable', 'tasks', 'habits', 'exams'];
+            tabs.forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`).classList.remove('bg-[#ecece9]', 'text-[#37352f]');
+                document.getElementById(`nav-${t}`).classList.add('text-gray-600');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabId}`).classList.add('bg-[#ecece9]', 'text-[#37352f]');
+            document.getElementById(`nav-${tabId}`).classList.remove('text-gray-600');
+
+            const titles = {
+                dashboard: 'Overview Dashboard',
+                timetable: 'Weekly Timetable',
+                tasks: 'Task Manager',
+                habits: 'Study Habit Grid',
+                exams: 'Grades & Exams'
+            };
+            document.getElementById('page-title').innerText = titles[tabId];
+            renderAll();
+        }
+
+        // Render All Views
+        function renderAll() {
+            renderDashboardStats();
+            renderTasks();
+            renderTimetable();
+            renderHabits();
+            renderExams();
+        }
+
+        function renderDashboardStats() {
+            const pendingCount = tasks.filter(t => !t.completed).length;
+            document.getElementById('stat-pending-tasks').innerText = pendingCount;
+            document.getElementById('stat-upcoming-exams').innerText = exams.length;
+        }
+
+        // Render Tasks
+        function renderTasks() {
+            const tbody = document.getElementById('tasks-body');
+            tbody.innerHTML = '';
+
+            let filtered = tasks;
+            if (currentFilter === 'High') filtered = tasks.filter(t => t.priority === 'High');
+            if (currentFilter === 'Pending') filtered = tasks.filter(t => !t.completed);
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-400">No tasks found in this view.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(t => {
+                const priorityColor = t.priority === 'High' ? 'bg-red-100 text-red-700' : t.priority === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700';
+                tbody.innerHTML += `
+                    <tr class="border-b border-[#e9e9e7] hover:bg-[#fbfbfa]">
                         <td class="p-3">
-                            <span class="px-2 py-1 rounded text-xs font-semibold ${emp.status === 'Present' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
-                                ${emp.status}
-                            </span>
+                            <input type="checkbox" ${t.completed ? 'checked' : ''} onclick="toggleTask(${t.id})" class="rounded border-gray-300 text-gray-900 focus:ring-0 cursor-pointer">
                         </td>
+                        <td class="p-3 font-medium ${t.completed ? 'line-through text-gray-400' : 'text-gray-900'}">${t.title}</td>
+                        <td class="p-3 text-gray-600">${t.course}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold ${priorityColor}">${t.priority}</span></td>
+                        <td class="p-3 text-gray-500">${t.date}</td>
                         <td class="p-3">
-                            <button onclick="toggleAttendance(${index})" class="text-xs text-blue-600 hover:underline font-medium">Toggle Presence</button>
+                            <button onclick="deleteTask(${t.id})" class="text-gray-400 hover:text-red-600 text-xs">Delete</button>
                         </td>
                     </tr>
                 `;
             });
+        }
 
-            // Render Tasks Table
-            const taskBody = document.getElementById('taskTableBody');
-            taskBody.innerHTML = '';
-            tasks.forEach((t, index) => {
-                let statusBadge = t.checked 
-                    ? `<span class="px-2.5 py-1 rounded bg-green-100 text-green-800 text-xs font-medium">Checked (Done)</span>` 
-                    : `<span class="px-2.5 py-1 rounded bg-amber-100 text-amber-800 text-xs font-medium">Pending / Never Checked</span>`;
+        function filterTasks(type) {
+            currentFilter = type;
+            ['all', 'high', 'pending'].forEach(f => {
+                const btn = document.getElementById(`filter-${f}`);
+                if (f === type.toLowerCase()) {
+                    btn.className = 'px-3 py-1 rounded bg-gray-900 text-white font-medium';
+                } else {
+                    btn.className = 'px-3 py-1 rounded bg-[#f7f6f3] text-gray-600 hover:bg-[#ecece9]';
+                }
+            });
+            renderTasks();
+        }
 
-                taskBody.innerHTML += `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="p-3 font-semibold text-gray-600">${t.type}</td>
-                        <td class="p-3">${t.employee}</td>
-                        <td class="p-3">${t.desc}</td>
-                        <td class="p-3 text-gray-500">${t.deadline}</td>
+        function toggleTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) task.completed = !task.completed;
+            renderAll();
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(t => t.id !== id);
+            renderAll();
+        }
+
+        // Render Timetable
+        function renderTimetable() {
+            const tbody = document.getElementById('timetable-body');
+            tbody.innerHTML = '';
+            if (timetable.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-400">No classes scheduled.</td></tr>`;
+                return;
+            }
+            timetable.forEach((c, index) => {
+                tbody.innerHTML += `
+                    <tr class="border-b border-[#e9e9e7] hover:bg-[#fbfbfa]">
+                        <td class="p-3 font-semibold text-gray-800">${c.day}</td>
+                        <td class="p-3 text-gray-600">${c.time}</td>
+                        <td class="p-3 font-medium">${c.subject}</td>
+                        <td class="p-3 text-gray-500">${c.location}</td>
                         <td class="p-3">
-                            <div class="flex items-center gap-3">
-                                ${statusBadge}
-                                <button onclick="toggleTaskCheck(${index})" class="text-xs text-gray-500 hover:text-blue-600 border px-2 py-1 rounded">Switch</button>
-                            </div>
+                            <button onclick="deleteClass(${index})" class="text-gray-400 hover:text-red-600 text-xs">Delete</button>
                         </td>
                     </tr>
                 `;
             });
         }
 
-        function toggleAttendance(index) {
-            employees[index].status = employees[index].status === 'Present' ? 'Absent' : 'Present';
-            renderApp();
+        function deleteClass(index) {
+            timetable.splice(index, 1);
+            renderTimetable();
         }
 
-        function toggleTaskCheck(index) {
-            tasks[index].checked = !tasks[index].checked;
-            renderApp();
+        // Render Habits Grid
+        function renderHabits() {
+            const table = document.getElementById('habits-table');
+            const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            let html = `<thead><tr class="bg-[#f7f6f3] border-b border-[#e9e9e7] text-gray-500"><th class="p-3 text-left">Study Habit / Routine</th>`;
+            daysOfWeek.forEach(d => html += `<th class="p-3">${d}</th>`);
+            html += `<th class="p-3">Action</th></tr></thead><tbody>`;
+
+            habits.forEach((h, hIndex) => {
+                html += `<tr class="border-b border-[#e9e9e7] hover:bg-[#fbfbfa]"><td class="p-3 text-left font-medium text-gray-800">${h.name}</td>`;
+                h.days.forEach((checked, dIndex) => {
+                    html += `<td class="p-3"><input type="checkbox" ${checked ? 'checked' : ''} onclick="toggleHabit(${hIndex}, ${dIndex})" class="rounded border-gray-300 text-emerald-600 focus:ring-0 cursor-pointer"></td>`;
+                });
+                html += `<td class="p-3"><button onclick="deleteHabit(${hIndex})" class="text-gray-400 hover:text-red-600 text-xs">Remove</button></td></tr>`;
+            });
+            html += `</tbody>`;
+            table.innerHTML = html;
         }
 
-        // Handle Assigned Task Form Submission
-        document.getElementById('taskForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const employee = document.getElementById('taskEmployee').value;
-            const desc = document.getElementById('taskDesc').value;
-            const deadline = document.getElementById('taskDeadline').value.replace('T', ' ');
+        function toggleHabit(hIndex, dIndex) {
+            habits[hIndex].days[dIndex] = !habits[hIndex].days[dIndex];
+        }
 
-            tasks.unshift({ type: 'Assigned', employee, desc, deadline, checked: false });
-            document.getElementById('taskDesc').value = '';
-            document.getElementById('taskDeadline').value = '';
-            renderApp();
-        });
+        function addHabit() {
+            const name = prompt("Enter habit or routine name:");
+            if (name) {
+                habits.push({ name, days: [false, false, false, false, false, false, false] });
+                renderHabits();
+            }
+        }
 
-        // Handle Ad-hoc Task Form Submission
-        document.getElementById('adhocForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const employee = document.getElementById('adhocEmployee').value;
-            const desc = document.getElementById('adhocDesc').value;
+        function deleteHabit(index) {
+            habits.splice(index, 1);
+            renderHabits();
+        }
 
-            tasks.unshift({ type: 'Ad-hoc (Self)', employee, desc, deadline: 'N/A', checked: true });
-            document.getElementById('adhocDesc').value = '';
-            renderApp();
-        });
+        // Render Exams
+        function renderExams() {
+            const tbody = document.getElementById('exams-body');
+            tbody.innerHTML = '';
+            if (exams.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-400">No exams scheduled.</td></tr>`;
+                return;
+            }
+            exams.forEach((e, index) => {
+                tbody.innerHTML += `
+                    <tr class="border-b border-[#e9e9e7] hover:bg-[#fbfbfa]">
+                        <td class="p-3 font-semibold text-gray-800">${e.course}</td>
+                        <td class="p-3 font-medium">${e.name}</td>
+                        <td class="p-3 text-gray-600">${e.date}</td>
+                        <td class="p-3 text-gray-500">${e.weight}</td>
+                        <td class="p-3 font-semibold text-purple-600">${e.target}</td>
+                        <td class="p-3">
+                            <button onclick="deleteExam(${index})" class="text-gray-400 hover:text-red-600 text-xs">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
 
-        // Initial render execution
-        renderApp();
+        function deleteExam(index) {
+            exams.splice(index, 1);
+            renderExams();
+            renderDashboardStats();
+        }
+
+        // Modals Control
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+            document.getElementById(modalId).classList.add('flex');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('flex');
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // Form Handlers
+        function handleAddTask(event) {
+            event.preventDefault();
+            const title = document.getElementById('taskTitle').value;
+            const course = document.getElementById('taskCourse').value;
+            const priority = document.getElementById('taskPriority').value;
+            const date = document.getElementById('taskDate').value;
+
+            tasks.push({ id: Date.now(), title, course, priority, date, completed: false });
+            document.getElementById('newTaskForm').reset();
+            closeModal('taskModal');
+            renderAll();
+        }
+
+        function handleAddClass(event) {
+            event.preventDefault();
+            const day = document.getElementById('classDay').value;
+            const time = document.getElementById('classTime').value;
+            const subject = document.getElementById('classSubject').value;
+            const location = document.getElementById('classLocation').value;
+
+            timetable.push({ day, time, subject, location });
+            document.getElementById('newClassForm').reset();
+            closeModal('classModal');
+            renderTimetable();
+        }
+
+        function handleAddExam(event) {
+            event.preventDefault();
+            const course = document.getElementById('examCourse').value;
+            const name = document.getElementById('examName').value;
+            const date = document.getElementById('examDate').value;
+            const weight = document.getElementById('examWeight').value;
+            const target = document.getElementById('examTarget').value;
+
+            exams.push({ course, name, date, weight, target });
+            document.getElementById('newExamForm').reset();
+            closeModal('examModal');
+            renderExams();
+            renderDashboardStats();
+        }
+
+        // Initial Initialization
+        renderAll();
     </script>
 </body>
 </html>
